@@ -45,8 +45,8 @@ class Cargo(BaseModel):
 
 class Machine(BaseModel):
     number_validator = RegexValidator(
-        regex=r'^\d{4}[A-Z]$',
-        message='Number must be in the format /D/D/D/D/C/ (e.g., 1234G).'
+        regex=r'^[1-9]\d{3}[A-Z]$',
+        message='Number must be a digit from 1000 to 9999 + a capital letter at the end (e.g., 2534B).'
     )
 
     number = models.CharField(max_length=5, unique=True, validators=[number_validator])
