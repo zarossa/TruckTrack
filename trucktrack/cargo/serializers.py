@@ -31,9 +31,23 @@ class CargoDeleteSerializer(serializers.ModelSerializer):
 
 
 class CargoListSerializer(CargoLocationSerializer):
+    closest_machine_count = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Cargo
-        fields = ['id', 'pick_up', 'delivery']
+        fields = ['id', 'pick_up', 'delivery', 'closest_machine_count']
+
+    @staticmethod
+    def get_closest_machine_count(obj):
+        cargo_location = (obj.pick_up.latitude, obj.pick_up.longitude)
+        machines = Machine.objects.all()
+        closest_machines_count = 0
+        for machine in machines:
+            machine_location = (machine.location.latitude, machine.location.longitude)
+            dist = distance.distance(cargo_location, machine_location).miles
+            if dist <= 450:
+                closest_machines_count += 1
+        return closest_machines_count
 
 
 class CargoUpdateSerializer(serializers.ModelSerializer):
@@ -90,7 +104,7 @@ class MachineSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class MachineCreateSerializer(MachineSerializer):
+class MachineCreateSerializer(serializers.ModelSerializer):
     location_postal = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
