@@ -1,3 +1,6 @@
+import random
+from geopy import distance
+
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
@@ -42,17 +45,25 @@ class CargoUpdateSerializer(serializers.ModelSerializer):
 class CargoRetrieveSerializer(CargoLocationSerializer):
     pick_up_postal = serializers.IntegerField(write_only=True)
     delivery_postal = serializers.IntegerField(write_only=True)
+    machine_list = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Cargo
-        fields = ['id', 'pick_up', 'pick_up_postal', 'delivery', 'delivery_postal', 'weight', 'description']
+        fields = ['id', 'pick_up', 'pick_up_postal', 'delivery', 'delivery_postal', 'weight', 'description',
+                  'machine_list']
 
     @staticmethod
-    def get_location(postal_code: int, location_type: str):
-        try:
-            return Location.objects.get(postal_code=postal_code)
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError({location_type: ["Location does not exist for this postal code."]})
+    def get_machine_list(obj):
+        cargo_location = obj.pick_up
+        machine_list = []
+        for machine in Machine.objects.all():
+            machine_location = machine.location
+            if machine_location:
+                cargo_point = (cargo_location.latitude, cargo_location.longitude)
+                machine_point = (machine_location.latitude, machine_location.longitude)
+                dist = distance.distance(cargo_point, machine_point).miles
+                machine_list.append({'number': machine.number, 'distance': dist})
+        return machine_list
 
     def validate(self, attrs):
         pick_up_postal = attrs.pop('pick_up_postal')
