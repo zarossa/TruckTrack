@@ -1,0 +1,71 @@
+version: '3'
+services:
+  db:
+    container_name: pg_db
+    image: postgres
+    restart: always
+    env_file:
+      - ./db.env
+    expose:
+      - 5432
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  truck_track:
+    image: truck_track:latest
+    container_name: truck_track
+    restart: always
+    volumes:
+      - static_data:/app/static
+    build:
+      context: ./TruckTrack/trucktrack/
+      dockerfile: Dockerfile
+    expose:
+      - 8000
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - 8000:80
+    volumes:
+      - static_data:/var/www/html/static
+      - ./TruckTrack/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - truck_track
+
+  celery-worker:
+    image: celery:worker
+    container_name: celery-worker
+    restart: always
+    build:
+      context: ./TruckTrack/trucktrack/
+      dockerfile: Dockerfile
+    command: celery -A proj worker -l INFO
+    depends_on:
+      - truck_track
+      - redis
+
+  celery-beat:
+    image: celery:beat
+    container_name: celery-beat
+    restart: always
+    build:
+      context: ./TruckTrack/trucktrack/
+      dockerfile: Dockerfile
+    command: celery -A proj beat -l info
+    depends_on:
+      - truck_track
+      - redis
+
+  redis:
+    image: redis:5-alpine
+    container_name: redis
+    restart: always
+
+volumes:
+  static_data:
