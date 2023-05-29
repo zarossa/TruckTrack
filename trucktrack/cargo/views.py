@@ -1,7 +1,8 @@
 from rest_framework import mixins, viewsets
 
-from cargo.models import Cargo
-from cargo.serializers import CargoListSerializer, CargoRetrieveSerializer, CargoDeleteSerializer, CargoUpdateSerializer
+from cargo.models import Cargo, Machine
+from cargo.serializers import CargoListSerializer, CargoRetrieveSerializer, CargoDeleteSerializer, \
+    CargoUpdateSerializer, MachineSerializer, MachineCreateSerializer
 
 
 class CargoViewSet(
@@ -15,12 +16,24 @@ class CargoViewSet(
     queryset = Cargo.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'retrieve':
-            return CargoRetrieveSerializer
-        elif self.action == 'list':
-            return CargoListSerializer
-        elif self.action == 'destroy':
-            return CargoDeleteSerializer
-        elif self.action == 'partial_update' or self.action == 'update':
-            return CargoUpdateSerializer
-        return super().get_serializer_class()
+        switch = {
+            'create': CargoRetrieveSerializer,
+            'retrieve': CargoRetrieveSerializer,
+            'list': CargoListSerializer,
+            'destroy': CargoDeleteSerializer,
+            'partial_update': CargoUpdateSerializer,
+            'update': CargoUpdateSerializer,
+        }
+        return switch.get(self.action)
+
+
+class MachineViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = Machine.objects.all()
+
+    def get_serializer_class(self):
+        switch = {
+            'create': MachineCreateSerializer,
+            'partial_update': MachineSerializer,
+            'update': MachineSerializer,
+        }
+        return switch.get(self.action)

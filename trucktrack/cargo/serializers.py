@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from .models import Cargo, Location
+from .models import Cargo, Location, Machine
 
 
 class CargoLocationSerializer(serializers.ModelSerializer):
@@ -58,7 +58,51 @@ class CargoRetrieveSerializer(CargoLocationSerializer):
         pick_up_postal = attrs.pop('pick_up_postal')
         delivery_postal = attrs.pop('delivery_postal')
 
-        attrs['pick_up'] = self.get_location(pick_up_postal, 'pick_up_postal')
-        attrs['delivery'] = self.get_location(delivery_postal, 'delivery_postal')
+        attrs['pick_up'] = get_location(pick_up_postal, 'pick_up_postal')
+        attrs['delivery'] = get_location(delivery_postal, 'delivery_postal')
 
         return attrs
+
+
+class MachineSerializer(serializers.ModelSerializer):
+    location_postal = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Machine
+        fields = ['id', 'location_postal']
+
+    def validate(self, attrs):
+        location_postal = attrs.pop('location_postal')
+        location = get_location(location_postal, 'location_postal')
+
+        attrs['location'] = location
+        return attrs
+
+
+class MachineCreateSerializer(MachineSerializer):
+    location_postal = serializers.IntegerField(write_only=True, required=False)
+
+    class Meta:
+        model = Machine
+        fields = ['id', 'number', 'location_postal', 'load_capacity']
+
+    def validate(self, attrs):
+        location_postal = attrs.pop('location_postal', None)
+        if location_postal is not None:
+            location = get_location(location_postal, 'location_postal')
+        else:
+            locations = Location.objects.all()
+            if locations.exists():
+                location = random.choice(locations)
+            else:
+                raise serializers.ValidationError("No locations available.")
+
+        attrs['location'] = location
+        return attrs
+
+
+def get_location(postal_code: int, location_type: str):
+    try:
+        return Location.objects.get(postal_code=postal_code)
+    except ObjectDoesNotExist:
+        raise serializers.ValidationError({location_type: ["Location does not exist for this postal code."]})
