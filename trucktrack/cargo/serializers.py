@@ -37,15 +37,19 @@ class CargoListSerializer(CargoLocationSerializer):
         model = Cargo
         fields = ['id', 'pick_up', 'delivery', 'closest_machine_count']
 
-    @staticmethod
-    def get_closest_machine_count(obj):
+    def get_closest_machine_count(self, obj):
         cargo_location = (obj.pick_up.latitude, obj.pick_up.longitude)
         machines = Machine.objects.all()
         closest_machines_count = 0
+        dist_filter = self.context['request'].query_params.get('dist', 450)
+        try:
+            dist_filter = int(dist_filter)
+        except ValueError:
+            return closest_machines_count
         for machine in machines:
             machine_location = (machine.location.latitude, machine.location.longitude)
             dist = distance.distance(cargo_location, machine_location).miles
-            if dist <= 450:
+            if dist <= dist_filter:
                 closest_machines_count += 1
         return closest_machines_count
 
