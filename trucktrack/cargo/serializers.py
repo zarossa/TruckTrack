@@ -21,12 +21,6 @@ class CargoLocationSerializer(serializers.ModelSerializer):
         return str(obj.delivery) if obj.delivery else None
 
 
-class CargoInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Cargo
-        fields = ['id', 'weight', 'description']
-
-
 class CargoDeleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cargo
@@ -39,13 +33,13 @@ class CargoListSerializer(CargoLocationSerializer):
         fields = ['id', 'pick_up', 'delivery']
 
 
-class CargoUpdateSerializer(CargoInfoSerializer):
+class CargoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cargo
         fields = ['id', 'weight', 'description']
 
 
-class CargoRetrieveSerializer(CargoInfoSerializer, CargoLocationSerializer):
+class CargoRetrieveSerializer(CargoLocationSerializer):
     pick_up_postal = serializers.IntegerField(write_only=True)
     delivery_postal = serializers.IntegerField(write_only=True)
 
