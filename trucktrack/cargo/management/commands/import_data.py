@@ -1,9 +1,11 @@
 import csv
+import os
 import random
 
 from django.core.management.base import BaseCommand
 
 from cargo.models import State, City, Location, Machine
+from proj.settings import BASE_DIR
 
 
 class Command(BaseCommand):
@@ -11,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not Location.objects.exists():
-            with open('uszips.csv', 'r') as csvfile:
+            with open(os.path.join(BASE_DIR, 'cargo', 'management', 'commands', 'uszips.csv'), 'r') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
                     state, _ = State.objects.get_or_create(code=row['state_id'], name=row['state_name'])
