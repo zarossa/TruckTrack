@@ -50,5 +50,5 @@ class Machine(BaseModel):
     )
 
     number = models.CharField(max_length=5, unique=True, validators=[number_validator])
-    location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True, related_name='machines')
+    location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='machines')
     load_capacity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(1000)])
