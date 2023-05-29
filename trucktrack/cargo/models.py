@@ -14,10 +14,16 @@ class State(BaseModel):
     code = models.CharField(max_length=2, unique=True)
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return f"State {self.code}"
+
 
 class City(BaseModel):
     city = models.CharField(max_length=100)
     state = models.ForeignKey(State, on_delete=models.PROTECT, related_name='cities')
+
+    def __str__(self):
+        return f"{self.state}. City {self.city}"
 
 
 class Location(BaseModel):
@@ -25,6 +31,9 @@ class Location(BaseModel):
     postal_code = models.PositiveIntegerField(unique=True)
     latitude = models.FloatField()
     longitude = models.FloatField()
+
+    def __str__(self):
+        return f"ZIP {self.postal_code}. {self.city}"
 
 
 class Cargo(BaseModel):
@@ -36,10 +45,10 @@ class Cargo(BaseModel):
 
 class Machine(BaseModel):
     number_validator = RegexValidator(
-        regex=r'^\d{4}[A-Z]$',
-        message='Number must be in the format /D/D/D/D/C/ (e.g., 1234G).'
+        regex=r'^[1-9]\d{3}[A-Z]$',
+        message='Number must be a digit from 1000 to 9999 + a capital letter at the end (e.g., 2534B).'
     )
 
     number = models.CharField(max_length=5, unique=True, validators=[number_validator])
-    location = models.ForeignKey(Location, on_delete=models.PROTECT, null=True, related_name='machines')
+    location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='machines')
     load_capacity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(1000)])

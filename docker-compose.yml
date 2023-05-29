@@ -1,0 +1,60 @@
+version: '3'
+services:
+  db:
+    container_name: pg_db
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    expose:
+      - 5432
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+
+  truck_track:
+    image: truck_track:latest
+    container_name: truck_track
+    restart: always
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - HOST=${HOST}
+      - DB_DATABASE=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER=redis://redis:6379/0
+    volumes:
+      - static_data:/app/static
+    build:
+      context: ./trucktrack/
+      dockerfile: Dockerfile
+    expose:
+      - 8000
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - 8000:80
+    volumes:
+      - static_data:/var/www/html/static
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - truck_track
+
+  redis:
+    image: redis:5-alpine
+    container_name: redis
+    restart: always
+
+volumes:
+  static_data:
