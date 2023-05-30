@@ -7,6 +7,10 @@
 - **Python** (Django Rest Framework)
 - **PostgreSQL** в качестве базы данных
 - **docker-compose** для запуска приложения
+- **nginx** веб-сервер
+- **gunicorn** WSGI server
+- **celery + redis** обработка периодических задач
+- **geopy** расчет расстояний
 
 ## Особенности:
 
